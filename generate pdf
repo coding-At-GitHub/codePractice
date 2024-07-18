@@ -1,0 +1,148 @@
+const generatePDF = () => {
+    debugger;
+    var imageData = process.env.PUBLIC_URL + "/images/SaptagiriNewLogo.png";
+
+    const options = {
+      align: "right",
+      width: 70,
+      height: 70,
+    };
+
+    // Add the image to the PDF document
+    const doc = new jsPDF();
+
+    // doc.addImage(imageData, 'png', 50, 50, 50, 0);
+    // doc.addImage(imageData, 'png', 50, 50, options.width, options.height, '', options.align);
+    doc.addImage(imageData, "png", 10, 10, 130, 30);
+
+    // doc.addImage(imageData, 'PNG', 10, 10, 50, 50); // Adjust the coordinates and size
+
+    // Set the font size and style for the title
+    doc.setFontSize(20);
+    doc.setFont("bold");
+    doc.setTextColor("#291770");
+
+    const title = "STATEMENT OF ACCOUNT";
+    const titleWidth =
+      (doc.getStringUnitWidth(title) * doc.internal.getFontSize()) /
+      doc.internal.scaleFactor;
+    const titleX = (doc.internal.pageSize.width - titleWidth) / 2;
+    // const textY = imageHeight + 20; // Adjust the Y-coordinate for spacing
+
+    // Add the title
+    doc.text(title, titleX, 50);
+
+    // Set the font size and style for the content
+    doc.setFontSize(11);
+    doc.setFont("normal");
+
+    //Masking for cutomer number
+    debugger;
+    var input = "";
+    input = props.auth.CustomerNumber.replace(/^(\d{0,4})(\d{0,3})/, "$1 $2");
+    var prefix = input.substr(0, input.length - 4);
+    var suffix = input.substr(-4);
+    var masked = prefix.replace(/\d/g, "X");
+    var maskCustNum = masked + suffix;
+    // setMaskCustNum(masked + suffix);
+
+    // Add the customer details
+    doc.text(`Customer Name: ${props.auth.CustomerName}`, 10, 60);
+    doc.text(`Address : ${pdfData.Address1 || ""}`, 10, 65);
+    doc.text(` ${pdfData.Address2 || ""}`, 10, 70);
+    doc.text(`${pdfData.Address3 || ""}`, 10, 75);
+    doc.text(` ${pdfData.Address4 || ""}`, 10, 80);
+    doc.text(`Registered Mobile Number: ${pdfData.Mobile || ""}`, 10, 85);
+    doc.text(`Registered Email ID: ${pdfData.Email || ""}`, 10, 90);
+    // doc.text(`Customer Number: ${maskCustNum}`, 10, 80);
+    // doc.text(`Account Number: ${accNo}`, 10, 90);
+
+    doc.setFontSize(11);
+    doc.setFont("normal");
+
+    // Right-aligned content
+    const text1 = `Customer Number: ${maskCustNum || ""}`;
+    const text2 = `MICR Code: ${pdfData.MICRCode || ""}`;
+    const text3 = `Account Number: ${accNo}`;
+    const text4 = `Branch Code: ${pdfData.BranchCode || ""}`;
+    const text5 = `Branch Name: ${authBranchName || ""}`;
+    // const text5 = `Branch Name: ${pdfData.BranchName || ""}`;
+    const text6 = `IFSC Code: ${pdfData.IFSCCode || ""}`;
+
+    const textWidth =
+      (doc.getStringUnitWidth(text1) * doc.internal.getFontSize()) /
+      doc.internal.scaleFactor;
+
+    const marginLeft = doc.internal.pageSize.width - textWidth - 30; // 30 is the right margin
+
+    const texts = [text1, text2, text3, text4, text5, text6];
+    let verticalPosition = 65;
+
+    texts.forEach((text, index) => {
+      if (verticalPosition <= 95) {
+        doc.text(text, marginLeft, verticalPosition);
+        verticalPosition += 5;
+      }
+    });
+
+    var fromDate = moment(fdate).format("DD/MM/YYYY");
+    var toDate = moment(edate).format("DD/MM/YYYY");
+
+    // Text sentence in the center
+    const Text = `Statement of Account Number: ${accNo} for the period (From ${fromDate} To: ${toDate})`;
+    const senWidth =
+      (doc.getStringUnitWidth(Text) * doc.internal.getFontSize()) /
+      doc.internal.scaleFactor;
+    const textX = (doc.internal.pageSize.width - senWidth) / 2;
+    // const textY = imageHeight + 20; // Adjust the Y-coordinate for spacing
+    doc.text(Text, textX, 100);
+
+    const columns = [
+      "Entry Date",
+      "Narration",
+      "Debit/Credit",
+      "Amount",
+      "Balance",
+      "Value Date",
+    ];
+
+    const columnStyles = {
+      3: { textAlign: "right" }, // Align the (Amount) to the right
+      4: { textAlign: "right" }, // Align the  (balance) to the right
+    };
+
+    const rows = [];
+    tableData.map((item) => {
+      rows.push([
+        item.EntryDate,
+        item.Particular,
+        item.DrCr,
+        item.Amount,
+        item.Balance,
+        item.ValueDate,
+      ]);
+    });
+    doc.autoTable({
+      startY: 105,
+      styles: { marginTop: 70, fontSize: 12 },
+      bodyStyles: { minCellHeight: 5 },
+      head: [columns],
+      body: rows,
+      columnStyles: columnStyles,
+    });
+
+    const tableHeight = doc.previousAutoTable.finalY;
+
+    // Add text after the autoTable
+    doc.setFontSize(14);
+    doc.text(
+      "This is a computer generated Account-Statement by customer.  Hence signatures not required.",
+      14,
+      tableHeight + 10
+    );
+
+    // Save the PDF
+    doc.save("StatementOfAccount.pdf");
+  };
+----
+（IPMsg Delayed Send: 16:30）
