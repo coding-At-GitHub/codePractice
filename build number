@@ -1,0 +1,101 @@
+{"major":1,"minor":0,"revision":"240418","build":"1055","tag":""}
+
+import axios from "axios";
+import { BASE_URL } from "../globals/constants";
+import { APP_MODE } from "../globals/constants";
+
+type VersionCheckProps = {
+    Version: string;
+}
+
+export const CheckVersionDeployed = async (): Promise<boolean> => {
+
+    async function checkLocalStorageData(latestVersion: VersionCheckProps): Promise<number> {
+        const savedVersion = await localStorage.getItem('latestVersion');
+        if (!savedVersion) {
+            localStorage.setItem('latestVersion', JSON.stringify(latestVersion));
+            return 2;
+        }
+        const parsedSavedVersion = JSON.parse(savedVersion);
+        const isEqual = JSON.stringify(parsedSavedVersion) === JSON.stringify(latestVersion);
+        if (isEqual) {
+            return 3;
+        } else {
+            localStorage.setItem('latestVersion', JSON.stringify(latestVersion));
+            return 1;
+        }
+    }
+
+
+    const urlOrigin = window.location.origin;
+    const pathName = (APP_MODE !== 'DEV') ? `/AA-PORTAL/` : `/`;
+    const urlHash = `${urlOrigin}${pathName}e71e63b07e8b61567f602f2aa2f7eab2.json`;
+
+   
+    try {
+        const response = await axios.get(urlHash);
+        const latestVersion = await response.data;
+        if (!response.data) {
+            console.log('Error in Fetching Version number');
+            throw new Error('Failed to fetch data');
+        }
+        const localResponse = await checkLocalStorageData(latestVersion);
+        if (localResponse === 1) {
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error('Error fetching version data:', error);
+        return false;
+    }
+
+}
+export default CheckVersionDeployed;
+
+
+
+
+var fs = require('fs');
+var dayjs = require('dayjs');
+
+fs.readFile('./public/e71e63b07e8b61567f602f2aa2f7eab2.json',function(err,contentData) {
+    if (err) throw err;
+
+    var versionData = JSON.parse(contentData);
+
+    versionData.revision = dayjs().format('YYMMDD');
+    versionData.build = dayjs().format('HHmm');
+
+    fs.writeFile('./public/e71e63b07e8b61567f602f2aa2f7eab2.json',JSON.stringify(versionData),function(err){
+        if (err)  throw err;
+       
+        // console.log(`Current build number: ${versionData.major}.${versionData.minor}.${versionData.revision}.${versionData.build}-${versionData.tag}`);
+    })
+});
+
+
+  function reloadApplication() {
+    window.location.reload();
+  }
+
+
+
+  function reloadApplication() {
+    window.location.reload();
+  }
+  const handleSubmit = async (event: any) => {
+    event.preventDefault();
+    const isVersionChanged = await CheckVersionDeployed();
+    // console.log("handle submit response", isVersionChanged);
+    if (isVersionChanged) {
+      // <LoadingDialogueBox  headingText="Application Updated !"  subHeadingText="Reloading..."  />
+      setOpenDialogue(true)
+      setTimeout(() => {
+        reloadApplication();
+      }, 3000);
+    } else {
+      handleLogin();
+    }
+
+  };
